@@ -1,10 +1,13 @@
 // ReSharper disable CppClangTidyClangDiagnosticC2xExtensions
-#include <Windows.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include <Windows.h>
 
 #define TO_STRING(STR) #STR
 
-static const char *ProcessAccessString[] = {
+static const char * const ProcessAccessString[] = {
     TO_STRING(PROCESS_TERMINATE),
     TO_STRING(PROCESS_CREATE_THREAD),
     TO_STRING(PROCESS_SET_SESSIONID),
@@ -20,7 +23,7 @@ static const char *ProcessAccessString[] = {
     TO_STRING(PROCESS_QUERY_LIMITED_INFORMATION),
     TO_STRING(PROCESS_SET_LIMITED_INFORMATION)};
 
-static const char *ThreadAccessString[] = {
+static const char * const ThreadAccessString[] = {
     TO_STRING(THREAD_TERMINATE),
     TO_STRING(THREAD_SUSPEND_RESUME),
     TO_STRING(THREAD_GET_CONTEXT),
@@ -36,7 +39,7 @@ static const char *ThreadAccessString[] = {
     TO_STRING(THREAD_QUERY_LIMITED_INFORMATION),
     TO_STRING(THREAD_RESUME)};
 
-static const DWORD ProcessAccessValues[] = {PROCESS_TERMINATE,
+static const uint32_t ProcessAccessValues[] = {PROCESS_TERMINATE,
                                             PROCESS_CREATE_THREAD,
                                             PROCESS_SET_SESSIONID,
                                             PROCESS_VM_OPERATION,
@@ -51,7 +54,7 @@ static const DWORD ProcessAccessValues[] = {PROCESS_TERMINATE,
                                             PROCESS_QUERY_LIMITED_INFORMATION,
                                             PROCESS_SET_LIMITED_INFORMATION};
 
-static const DWORD ThreadAccessValues[] = {THREAD_TERMINATE,
+static const uint32_t ThreadAccessValues[] = {THREAD_TERMINATE,
                                            THREAD_SUSPEND_RESUME,
                                            THREAD_GET_CONTEXT,
                                            THREAD_SET_CONTEXT,
@@ -72,50 +75,50 @@ int main(int argc, char *argv[]) {
     return 0;
   }
 
-  const DWORD ProcessId = strtol(argv[1], NULL, 10);
-  const DWORD ThreadId = strtol(argv[2], NULL, 10);
+  const uint32_t process_id = strtol(argv[1], NULL, 10);
+  const uint32_t thread_id = strtol(argv[2], NULL, 10);
 
-  BOOL AllowedProcessAccess[ARRAYSIZE(ProcessAccessValues)] = {};
-  BOOL AllowedThreadAccess[ARRAYSIZE(ThreadAccessValues)] = {};
-  BOOL CanAccessProcess = FALSE;
+  bool allowed_process_access[ARRAYSIZE(ProcessAccessValues)] = {};
+  bool allowed_thread_access[ARRAYSIZE(ThreadAccessValues)] = {};
+  bool can_access_process = false;
 
-  for (SIZE_T I = 0; I < ARRAYSIZE(ProcessAccessValues); I++) {
-    const HANDLE Handle = OpenProcess(ProcessAccessValues[I], FALSE, ProcessId);
+  for (size_t i = 0; i < ARRAYSIZE(ProcessAccessValues); i++) {
+    const void* Handle = OpenProcess(ProcessAccessValues[i], false, process_id);
     if (Handle != NULL) {
-      AllowedProcessAccess[I] = TRUE;
-      CanAccessProcess = TRUE;
+      allowed_process_access[i] = true;
+      can_access_process = true;
       CloseHandle(Handle);
     }
   }
 
-  if (!CanAccessProcess) {
+  if (!can_access_process) {
     fprintf(stdout, "No access to process.\n");
     return 0;
   }
 
-  for (SIZE_T I = 0; I < ARRAYSIZE(ThreadAccessValues); I++) {
-    const HANDLE ThreadHandle =
-        OpenThread(ThreadAccessValues[I], FALSE, ThreadId);
+  for (size_t i = 0; i < ARRAYSIZE(ThreadAccessValues); i++) {
+    const void* thread_handle =
+        OpenThread(ThreadAccessValues[i], false, thread_id);
 
-    if (ThreadHandle != NULL) {
-      AllowedThreadAccess[I] = TRUE;
-      CloseHandle(ThreadHandle);
+    if (thread_handle != NULL) {
+      allowed_thread_access[i] = true;
+      CloseHandle(thread_handle);
     }
   }
 
-  fprintf(stdout, "AllowedProcessAccess\n");
+  fprintf(stdout, "allowed_process_access\n");
 
-  for (SIZE_T I = 0; I < ARRAYSIZE(AllowedProcessAccess); I++) {
-    if (AllowedProcessAccess[I]) {
-      fprintf(stdout, "\t%s\n", ProcessAccessString[I]);
+  for (size_t i = 0; i < ARRAYSIZE(allowed_process_access); i++) {
+    if (allowed_process_access[i]) {
+      fprintf(stdout, "\t%s\n", ProcessAccessString[i]);
     }
   }
 
-  fprintf(stdout, "AllowedThreadAccess\n");
+  fprintf(stdout, "allowed_thread_access\n");
 
-  for (SIZE_T I = 0; I < ARRAYSIZE(AllowedThreadAccess); I++) {
-    if (AllowedThreadAccess[I]) {
-      fprintf(stdout, "\t%s\n", ThreadAccessString[I]);
+  for (size_t i = 0; i < ARRAYSIZE(allowed_thread_access); i++) {
+    if (allowed_thread_access[i]) {
+      fprintf(stdout, "\t%s\n", ThreadAccessString[i]);
     }
   }
 
